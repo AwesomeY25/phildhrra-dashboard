@@ -1,6 +1,7 @@
 from typing import Any
 import streamlit as st
 import pandas as pd
+import os
 
 def animation_demo(df: pd.DataFrame) -> None:
     # Display the DataFrame as a table
@@ -10,8 +11,7 @@ st.set_page_config(page_title="Projects", page_icon="📹")
 st.markdown("# Projects")
 
 # Path to your CSV file
-file_path = r'.\pages\resources\DestinationSheet.csv'
-
+file_path = r'.\resources\DestinationSheet.csv'
 # Read the CSV file into a Pandas DataFrame, skipping the first row and using the second row as headers
 df = pd.read_csv(file_path, skiprows=1, header=0)
 
