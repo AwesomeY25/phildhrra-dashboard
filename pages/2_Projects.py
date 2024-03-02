@@ -1,7 +1,7 @@
 from typing import Any
 import streamlit as st
 import pandas as pd
-import os
+from io import StringIO
 
 def animation_demo(df: pd.DataFrame) -> None:
     # Display the DataFrame as a table
@@ -10,10 +10,20 @@ def animation_demo(df: pd.DataFrame) -> None:
 st.set_page_config(page_title="Projects", page_icon="📹")
 st.markdown("# Projects")
 
-# Path to your CSV file
-file_path = r'.\resources\DestinationSheet.csv'
-# Read the CSV file into a Pandas DataFrame, skipping the first row and using the second row as headers
-df = pd.read_csv(file_path, skiprows=1, header=0)
+
+csv_data = """
+Organization,Program Type,Programs/Projects Services,No. of Beneficiaries,Area Coverage (Pls. Specify Name of Areas),Area Coverage (Pls. Specify Name of Areas),Area Coverage (Pls. Specify Name of Areas)
+NGO 1,Sustainable Agricultural Productivity/Natural Resource Management,Sample Project,1200,Laguna,Something,Something
+NGO 2,Sustainable Agricultural Productivity/Natural Resource Management,Sample Project,1200,Pampanga,Something na,Something na
+NGO 2,Sustainable Agricultural Productivity/Natural Resource Management,Sample Project,1200,Laguna,Something pa,Something pa
+NGO 1,Basic Social Services Delivery,Sample Project,1200,Laguna,Something,Something
+NGO 1,Basic Social Services Delivery,Sample Project,1200,Pampanga,Something na,Something na
+NGO 2,Basic Social Services Delivery,Sample Project,1200,Laguna,Something,Something
+NGO 2,Basic Social Services Delivery,Sample Project,1200,Pampanga,Something na,Something na
+"""
+
+# Convert CSV data to DataFrame
+df = pd.read_csv(StringIO(csv_data), skiprows=1, header=0)
 
 # Select options for organization and program type
 organizations = df['Organization'].unique()
