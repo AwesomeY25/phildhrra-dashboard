@@ -39,12 +39,19 @@ def finance_dashboard() -> None:
     sources_df = pd.DataFrame(sources_data)
     st.table(sources_df)
 
-    st.write("Total: ")
+    st.write("## Donor Organizations and Funding Partners")
 
     # Display information about major sources of funds and grants
     st.write("If major sources of funds are grants, indicate funding partner or donor organization and grant amount for the past 3 years.")
-
-
+    grant_data = {
+        'Donor/Funder': ['', '', ''],
+        'Project Funded': ['', '', ''],
+        'Year(s) Covered': ['', '', ''],
+        'Amount': ['', '', '']
+    }
+    grant_df = pd.DataFrame(grant_data)
+    st.table(grant_df)
+    
 # Set page title and icon
 st.set_page_config(page_title="Finance Dashboard", page_icon="💰")
 # Display the title
