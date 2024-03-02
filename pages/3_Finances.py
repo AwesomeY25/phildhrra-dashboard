@@ -1,7 +1,6 @@
 from typing import Any
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
 
 def finance_dashboard() -> None:
     
