@@ -1,0 +1,17 @@
+credentials: 
+  usernames:
+    jose: 
+      email: jose@gmail.com
+      name: Jose Rizal
+      password: touchmenot
+    michael: 
+      email: mj@gmail.com
+      name: Michael Jackson
+      password: hihi
+cookie:
+  expiry_days: 1
+  key: random_signature_key
+  name: random_cookie_name
+preauthorized:
+  emails:
+  - john@gmail.com
