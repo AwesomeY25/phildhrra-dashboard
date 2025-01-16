@@ -30,16 +30,28 @@ def run():
 
     st.write("# Welcome to PhilDHRRA! 👋")
 
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
+    # File upload feature
+    st.write("**Upload an Excel File:**")
+    uploaded_file = st.file_uploader("Choose an Excel file", type=['xlsx', 'xls'])
 
-    if st.button("Log In"):
-        if username == "phildhrra" and password == "phildhrra_password":
-            st.success("Logged in successfully!")
-            return True
-        else:
-            st.error("Invalid username or password")
-    return False
+    if uploaded_file:
+        # Save the uploaded file to the resources directory
+        resources_dir = Path("resources")
+        resources_dir.mkdir(exist_ok=True)
+
+        file_save_path = resources_dir / uploaded_file.name
+        with open(file_save_path, "wb") as f:
+            f.write(uploaded_file.getbuffer())
+
+        st.success(f"File uploaded and saved as: {file_save_path}")
+
+        # Display uploaded file content
+        try:
+            excel_data = pd.read_excel(file_save_path)
+            st.write("**Uploaded File Content:**")
+            st.dataframe(excel_data)
+        except Exception as e:
+            st.error(f"Error reading the file: {e}")
 
 if __name__ == "__main__":
     run()
