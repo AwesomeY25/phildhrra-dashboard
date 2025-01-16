@@ -9,76 +9,53 @@ import streamlit_authenticator as stauth
 # Set page title and icon
 st.set_page_config(page_title="Finance Dashboard", page_icon="💰")
 
-names = ["John Smith", "Jose Rizal"]
-usernames = ["johnsmith", "jrizal"]
-
-file_path = Path(__file__).parent / "hashed_pw.pkl"
-with file_path.open("rb") as file:
-    hashed_passwords = pickle.load(file)
-
-authenticator = stauth.Authenticate(names, usernames, hashed_passwords)
-
-name, authentication_status, username = authenticator.login("Login", "main")
-
-if authentication_status == False: 
-    st.error("Username/Password is Incorrect")
-
-if authentication_status == None: 
-    st.warning("Please enter your username and password")
-
-if authentication_status: 
-
-    def finance_dashboard() -> None:
+def finance_dashboard(df: pd.DataFrame) -> None:
+    # Display a high-level overview
+    st.write("### Average of Sources of Income or Revenues")
         
-        st.write("### Average of Sources of Income or Revenues")
-        sources_data = {
-            'Source': ['Grant', 'Dues', 'Service Fees (Consultancy)', 'Donations',
-                    'Gains from Investments (interest earnings)', 'Endowment fund',
-                    'Social Enterprises', 'Others (Specify)'],
-            'Amount in PHP - Past Year': ['', '', '', '', '', '', '', ''],
-            'Amount in PHP - Current Year': ['', '', '', '', '', '', '', '']
-        }
-        sources_df = pd.DataFrame(sources_data)
-        st.table(sources_df)
+    sources_df = df[['Source', 'Amount in PHP - Past Year', 'Amount in PHP - Current Year']].copy()
+    st.table(sources_df)
         
-        st.write("### Grants Data per Year")
-        grant_data = {
-            'Year': [2019, 2020, 2021],
-            'Grant Amount': [50000, 34000, 70000]  # Example data, replace with actual grant amounts
-        }
-        grant_df = pd.DataFrame(grant_data)
-        st.line_chart(grant_df.set_index('Year'))  # Line chart for grants per year
+    # Display Grants Data per Year
+    st.write("### Grants Data per Year")
+    grant_data = df[df['Source'] == 'Grant'][['Year', 'Amount']].dropna()
+    if not grant_data.empty:
+        st.line_chart(grant_data.set_index('Year'))  # Line chart for grants per year
+    else:
+        st.write("No grant data available.")
         
-        st.write("### Finances per Organization")
-        # Selectbox to choose which NGO to display finance data
-        selected_ngo = st.selectbox('Select NGO', ['NGO 1', 'NGO 2'])
+    # Finances per Organization
+    st.write("### Finances per Organization")
+    organizations = df['Organization'].unique()
+    selected_ngo = st.selectbox('Select Organization', organizations)
 
-        # Display the sources of income or revenues
-        st.write("Sources of Income or Revenues:")
-        sources_data = {
-            'Source': ['Grant', 'Dues', 'Service Fees (Consultancy)', 'Donations',
-                    'Gains from Investments (interest earnings)', 'Endowment fund',
-                    'Social Enterprises', 'Others (Specify)'],
-            'Amount in PHP - Past Year': ['', '', '', '', '', '', '', ''],
-            'Amount in PHP - Current Year': ['', '', '', '', '', '', '', '']
-        }
-        sources_df = pd.DataFrame(sources_data)
-        st.table(sources_df)
+    filtered_data = df[df['Organization'] == selected_ngo]
+    if not filtered_data.empty:
+        st.write(f"Finance data for {selected_ngo}:")
+        st.table(filtered_data[['Source', 'Amount in PHP - Past Year', 'Amount in PHP - Current Year']])
+    else:
+        st.write(f"No data available for {selected_ngo}.")
 
-        st.write("## Donor Organizations and Funding Partners")
-
-        # Display information about major sources of funds and grants
-        st.write("If major sources of funds are grants, indicate funding partner or donor organization and grant amount for the past 3 years.")
-        grant_data = {
-            'Donor/Funder': ['', '', ''],
-            'Project Funded': ['', '', ''],
-            'Year(s) Covered': ['', '', ''],
-            'Amount': ['', '', '']
-        }
-        grant_df = pd.DataFrame(grant_data)
-        st.table(grant_df)
+    # Donor Organizations and Funding Partners
+    st.write("## Donor Organizations and Funding Partners")
+    st.write("If major sources of funds are grants, indicate funding partner or donor organization and grant amount for the past 3 years.")
+    donor_data = df[['Donor/Funder', 'Project Funded', 'Year(s) Covered', 'Amount']].dropna()
+    st.table(donor_data)
         
-    # Display the title
+# Load data from the Excel file
+excel_file_path = 'resources\This Year - Consolidator Sheet.xlsx'
+sheet_name = 'Resource Mobilization'
+
+try:
+    df = pd.read_excel(excel_file_path, sheet_name=sheet_name)
     st.markdown("# Finance Dashboard")
-    # Display the finance dashboard
-    finance_dashboard()
+
+    # Check if the sheet has data
+    if df.empty:
+        st.info(f"No data available in the '{sheet_name}' sheet.")
+    else:
+        # Call the finance dashboard function if data is loaded
+        finance_dashboard(df)
+
+except Exception as e:
+    st.error(f"Failed to load data from {sheet_name}. Error: {e}")

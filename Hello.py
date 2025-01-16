@@ -18,6 +18,7 @@ from streamlit.logger import get_logger
 import pickle
 from pathlib import Path
 import streamlit_authenticator as stauth
+import pandas as pd
 
 LOGGER = get_logger(__name__)
 

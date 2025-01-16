@@ -1,108 +1,57 @@
-from typing import Any
-
 import streamlit as st
 import pandas as pd
 
-import pickle
-from pathlib import Path
-import streamlit_authenticator as stauth
+# Load the Excel file
+file_path = 'resources\This Year - Consolidator Sheet.xlsx'
+xls = pd.ExcelFile(file_path)
 
-st.set_page_config(page_title="Organizations", page_icon="🏢")
-st.markdown("# Organizational Profile")
+# Define sheet names
+sheets_to_display = {
+    "Basic Profile": ["Name of NGO", "Address (Main):", "Telephone/Telefax:", "E-mail Address:", "Website:", "Facebook Link:", "Instagram Link:", "Twitter Link:", "Name of Exclusive Director:", "Mobile No. of ED", "Name of Admin/Finance/Office Manager:"],
+    "Organizational Strengths": ["Organization", "Strengths/Expertise", "Rating"],
+    "Capacity Development Programs": ["Organization", "Title of Training", "Estimated Date", "Location (Region, City)", "Training Organizer/Provider"],
+    "Capacity DevelopmentTraining Ne": ["Organization", "Capacity Needs of the Organization", "Reason/s"]
+}
 
-names = ["John Smith", "Jose Rizal"]
-usernames = ["johnsmith", "jrizal"]
+# Streamlit app
+st.title("NGO Strengths and Weaknesses")
 
-file_path = Path(__file__).parent / "hashed_pw.pkl"
-with file_path.open("rb") as file:
-    hashed_passwords = pickle.load(file)
+# Loop through the specified sheets
+for sheet, columns in sheets_to_display.items():
+    st.header(sheet)
 
-authenticator = stauth.Authenticate(names, usernames, hashed_passwords, "phildhrra_dashboard", "abcdef", cookie_expiry_days=0)
+    # Check if the sheet exists in the file
+    if sheet not in xls.sheet_names:
+        st.warning(f"Sheet '{sheet}' not found in the file.")
+        continue
 
-name, authentication_status, username = authenticator.login("Login", "main")
+    # Load the data
+    df = xls.parse(sheet)
 
-if authentication_status == False: 
-    st.error("Username/Password is Incorrect")
+    # Filter columns if specified
+    if columns:
+        df = df[[col for col in columns if col in df.columns]]
 
-if authentication_status == None: 
-    st.warning("Please enter your username and password")
-
-if authentication_status: 
-
-    # Define NGO data
-    ngo_data = {
-        'NGO 1': {
-            'Name': 'Example NGO 1',
-            'Address': '123 NGO Street, Cityville',
-            'Telephone/Telefax': '+1234567890',
-            'E-mail Address': 'info@examplengo1.org',
-            'Website': 'www.examplengo1.org',
-            'Facebook Link': 'www.facebook.com/examplengo1',
-            'Social Media Links': 'twitter.com/examplengo1, instagram.com/examplengo1',
-            'Name of Exclusive Director': 'John Doe',
-            'Mobile No. of ED': '+1987654321',
-            'Name of Admin/Finance/Office Manager': 'Jane Smith',
-            'Mobile No.': '+1234567890',
-            'Strengths': ['Transparency', 'Community Engagement', 'Financial Stability'],
-            'Needs': ['Funding', 'Volunteers'],
-            'Reasons': ['To expand programs', 'To reach more communities']
-        },
-        'NGO 2': {
-            'Name': 'Sample NGO 2',
-            'Address': '456 NGO Avenue, Townsville',
-            'Telephone/Telefax': '+0987654321',
-            'E-mail Address': 'info@samplengo2.org',
-            'Website': 'www.samplengo2.org',
-            'Facebook Link': 'www.facebook.com/samplengo2',
-            'Social Media Links': 'twitter.com/samplengo2, instagram.com/samplengo2',
-            'Name of Exclusive Director': 'Alice Johnson',
-            'Mobile No. of ED': '+9876543210',
-            'Name of Admin/Finance/Office Manager': 'Bob Brown',
-            'Mobile No.': '+0987654321',
-            'Strengths': ['Efficiency', 'Innovation', 'Impactful Programs'],
-            'Needs': ['Training', 'Equipment'],
-            'Reasons': ['To enhance skills', 'To improve service delivery']
-        }
-    }
-
-    # Convert NGO data into a DataFrame
-    ngo_df = pd.DataFrame.from_dict(ngo_data, orient='index')
-
-    # Display the table for strengths
-    st.write("### NGO Strengths")
-    strengths_df = ngo_df['Strengths'].apply(lambda x: ', '.join(x))
-    st.table(strengths_df)
-
-    # Selectbox to choose which strength to filter by
-    selected_strength = st.selectbox('Select Strength', ['Transparency', 'Community Engagement', 'Financial Stability',
-                                                        'Efficiency', 'Innovation', 'Impactful Programs'])
-
-    # Filter NGOs based on the selected strength
-    filtered_ngos = [ngo_name for ngo_name, ngo_info in ngo_data.items() if selected_strength in ngo_info['Strengths']]
-
-    # Display the selected NGOs with the selected strength
-    if filtered_ngos:
-        st.write("**NGOs with Selected Strength:**")
-        for name in filtered_ngos:
-            st.write(f"- {name}")
+    # Check if the sheet has data
+    if df.empty:
+        st.info(f"No data available in the '{sheet}' sheet.")
     else:
-        st.write("No NGOs found with this strength.")
+        # Add filtering based on Organization if the column exists
+        if "Organization" in df.columns:
+            unique_organizations = df["Organization"].dropna().unique()
+            selected_org = st.selectbox(f"Filter by Organization in {sheet}", unique_organizations, key=sheet)
 
-    # Display the table for needs
-    st.write("### NGO Needs")
-    needs_df = ngo_df['Needs'].apply(lambda x: ', '.join(x))
-    st.table(needs_df)
+            # Filter the data based on the selected organization
+            filtered_data = df[df["Organization"] == selected_org]
+            st.subheader(f"Trainings for{selected_org}")
+            st.dataframe(filtered_data)
+        else:
+            st.dataframe(df)
 
-    # Selectbox to choose which need to filter by
-    selected_need = st.selectbox('Select Need', ['Funding', 'Volunteers', 'Training', 'Equipment'])
+        # Create basic visualizations if numerical data exists
+        if any(df.dtypes == 'float64') or any(df.dtypes == 'int64'):
+            st.subheader("Visualizations")
+            numeric_columns = df.select_dtypes(include=['float64', 'int64']).columns
 
-    # Filter NGOs based on the selected need
-    filtered_ngos = [ngo_name for ngo_name, ngo_info in ngo_data.items() if selected_need in ngo_info['Needs']]
-
-    # Display the selected NGOs with the selected need
-    if filtered_ngos:
-        st.write("**NGOs with Selected Need:**")
-        for name in filtered_ngos:
-            st.write(f"- {name}")
-    else:
-        st.write("No NGOs found with this need.")
+            for column in numeric_columns:
+                st.bar_chart(df[column])

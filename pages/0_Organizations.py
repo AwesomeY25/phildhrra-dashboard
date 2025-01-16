@@ -1,106 +1,75 @@
-from typing import Any
-
 import streamlit as st
 import pandas as pd
 
-import pickle
-from pathlib import Path
-import streamlit_authenticator as stauth
+# Load the Excel file
+file_path = 'resources\This Year - Consolidator Sheet.xlsx'
+xls = pd.ExcelFile(file_path)
 
-st.set_page_config(page_title="Organizations", page_icon="\ud83c\udfe2")
+# Define sheet names
+sheets_to_display = {
+    "Basic Profile": ["Name of NGO", "Address (Main):", "Telephone/Telefax:", "E-mail Address:", "Website:", "Facebook Link:", "Instagram Link:", "Twitter Link:", "Name of Exclusive Director:", "Mobile No. of ED", "Name of Admin/Finance/Office Manager:"],
+}
 
-names = ["John Smith", "Jose Rizal"]
-usernames = ["johnsmith", "jrizal"]
+# Streamlit app
+st.title("Organization's Information")
 
-file_path = Path(__file__).parent / "hashed_pw.pkl"
-with file_path.open("rb") as file:
-    hashed_passwords = pickle.load(file)
+# Loop through the specified sheets
+for sheet, columns in sheets_to_display.items():
+    st.header(sheet)
 
-authenticator = stauth.Authenticate(names, usernames, hashed_passwords, "phildhrra_dashboard", "abcdef", cookie_expiry_days=0)
+    # Check if the sheet exists in the file
+    if sheet not in xls.sheet_names:
+        st.warning(f"Sheet '{sheet}' not found in the file.")
+        continue
 
-name, authentication_status, username = authenticator.login("Login", "main")
+    # Load the data
+    df = xls.parse(sheet)
 
-if authentication_status == False: 
-    st.error("Username/Password is Incorrect")
+    # Filter columns if specified
+    if columns:
+        df = df[[col for col in columns if col in df.columns]]
 
-if authentication_status == None: 
-    st.warning("Please enter your username and password")
+    # Check if the sheet has data
+    if df.empty:
+        st.info(f"No data available in the '{sheet}' sheet.")
+    else:
+        # Display the data
+        st.subheader("Data Table")
+        st.dataframe(df)
 
-if authentication_status: 
+        # Display user profile info for Basic Profile sheet
+        if sheet == "Basic Profile":
+            unique_organizations = df["Name of NGO"].dropna().unique()
+            selected_ngo = st.selectbox("Select an NGO", unique_organizations)
 
-    def display_ngo_info(ngo_data: dict, ngo_name: str) -> None:
-        st.write(f"### {ngo_name}")
-        ngo_info_df = pd.DataFrame.from_dict(ngo_data[ngo_name], orient='index', columns=['Information'])
-        st.table(ngo_info_df)
+            if selected_ngo:
+                filtered_data = df[df["Name of NGO"] == selected_ngo]
+                ngo_data = filtered_data.iloc[0]
+                user_profile = {
+                    'Name': ngo_data.get("Name of NGO", "N/A"),
+                    'Address': ngo_data.get("Address (Main):", "N/A"),
+                    'Telephone': ngo_data.get("Telephone/Telefax:", "N/A"),
+                    'Email': ngo_data.get("E-mail Address:", "N/A"),
+                    'Website': ngo_data.get("Website:", "N/A"),
+                    'Facebook': ngo_data.get("Facebook Link:", "N/A"),
+                    'Instagram': ngo_data.get("Instagram Link:", "N/A"),
+                    'Twitter': ngo_data.get("Twitter Link:", "N/A"),
+                    'Executive Director Name': ngo_data.get("Name of Exclusive Director:", "N/A"),
+                    'Mobile of ED': ngo_data.get("Mobile No. of ED", "N/A"),
+                    'Admin/Finance Manager Name': ngo_data.get("Name of Admin/Finance/Office Manager:", "N/A"),
+                }
 
-    authenticator.logout("Logout", "sidebar")
-    st.markdown("# Organizational Profile")
+                st.write(f"### Profile for {selected_ngo}")
+                st.write(user_profile)
 
-    # Define NGO data
-    ngo_data = {
-        'NGO 1': {
-            'Name': 'Example NGO 1',
-            'Address': '123 NGO Street, Cityville',
-            'Telephone/Telefax': '+1234567890',
-            'E-mail Address': 'info@examplengo1.org',
-            'Website': 'www.examplengo1.org',
-            'Facebook Link': 'www.facebook.com/examplengo1',
-            'Social Media Links': 'twitter.com/examplengo1, instagram.com/examplengo1',
-            'Name of Exclusive Director': 'John Doe',
-            'Mobile No. of ED': '+1987654321',
-            'Name of Admin/Finance/Office Manager': 'Jane Smith',
-            'Mobile No.': '+1234567890',
-            'Strengths': ['Transparency', 'Community Engagement', 'Financial Stability']
-        },
-        'NGO 2': {
-            'Name': 'Sample NGO 2',
-            'Address': '456 NGO Avenue, Townsville',
-            'Telephone/Telefax': '+0987654321',
-            'E-mail Address': 'info@samplengo2.org',
-            'Website': 'www.samplengo2.org',
-            'Facebook Link': 'www.facebook.com/samplengo2',
-            'Social Media Links': 'twitter.com/samplengo2, instagram.com/samplengo2',
-            'Name of Exclusive Director': 'Alice Johnson',
-            'Mobile No. of ED': '+9876543210',
-            'Name of Admin/Finance/Office Manager': 'Bob Brown',
-            'Mobile No.': '+0987654321',
-            'Strengths': ['Efficiency', 'Innovation', 'Impactful Programs']
-        }
-    }
+                # Display filtered data table
+                st.subheader("Filtered Data Table")
+                st.dataframe(filtered_data)
 
-    # File upload feature
-    st.write("**Upload an Excel File:**")
-    uploaded_file = st.file_uploader("Choose an Excel file", type=['xlsx', 'xls'])
+        # Create basic visualizations if numerical data exists
+        if any(df.dtypes == 'float64') or any(df.dtypes == 'int64'):
+            st.subheader("Visualizations")
+            numeric_columns = df.select_dtypes(include=['float64', 'int64']).columns
 
-    if uploaded_file:
-        # Save the uploaded file to the resources directory
-        resources_dir = Path("resources")
-        resources_dir.mkdir(exist_ok=True)
-
-        file_save_path = resources_dir / uploaded_file.name
-        with open(file_save_path, "wb") as f:
-            f.write(uploaded_file.getbuffer())
-
-        st.success(f"File uploaded and saved as: {file_save_path}")
-
-        # Display uploaded file content
-        try:
-            excel_data = pd.read_excel(file_save_path)
-            st.write("**Uploaded File Content:**")
-            st.dataframe(excel_data)
-        except Exception as e:
-            st.error(f"Error reading the file: {e}")
-
-    # Create a DataFrame with the names of NGOs
-    ngo_names_df = pd.DataFrame({'NGO Names': list(ngo_data.keys())})
-
-    # Display the table of NGO names
-    st.write("**All Members:**")
-    st.table(ngo_names_df)
-
-    st.write("**View Organization Details:**")
-    # Selectbox to choose which NGO to display
-    selected_ngo = st.selectbox('Select NGO', list(ngo_data.keys()))
-
-    # Display the selected NGO information
-    display_ngo_info(ngo_data, selected_ngo)
+            for column in numeric_columns:
+                st.bar_chart(df[column])
