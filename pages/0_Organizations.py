@@ -7,7 +7,7 @@ import pickle
 from pathlib import Path
 import streamlit_authenticator as stauth
 
-st.set_page_config(page_title="Organizations", page_icon="🏢")
+st.set_page_config(page_title="Organizations", page_icon="\ud83c\udfe2")
 
 names = ["John Smith", "Jose Rizal"]
 usernames = ["johnsmith", "jrizal"]
@@ -67,6 +67,29 @@ if authentication_status:
             'Strengths': ['Efficiency', 'Innovation', 'Impactful Programs']
         }
     }
+
+    # File upload feature
+    st.write("**Upload an Excel File:**")
+    uploaded_file = st.file_uploader("Choose an Excel file", type=['xlsx', 'xls'])
+
+    if uploaded_file:
+        # Save the uploaded file to the resources directory
+        resources_dir = Path("resources")
+        resources_dir.mkdir(exist_ok=True)
+
+        file_save_path = resources_dir / uploaded_file.name
+        with open(file_save_path, "wb") as f:
+            f.write(uploaded_file.getbuffer())
+
+        st.success(f"File uploaded and saved as: {file_save_path}")
+
+        # Display uploaded file content
+        try:
+            excel_data = pd.read_excel(file_save_path)
+            st.write("**Uploaded File Content:**")
+            st.dataframe(excel_data)
+        except Exception as e:
+            st.error(f"Error reading the file: {e}")
 
     # Create a DataFrame with the names of NGOs
     ngo_names_df = pd.DataFrame({'NGO Names': list(ngo_data.keys())})
