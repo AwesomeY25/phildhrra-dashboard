@@ -3,7 +3,6 @@ import streamlit as st
 import pandas as pd
 from pathlib import Path
 import pickle
-import streamlit_authenticator as stauth
 
 st.set_page_config(page_title="Projects", page_icon="📹")
 

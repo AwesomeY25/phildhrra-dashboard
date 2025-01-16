@@ -4,7 +4,6 @@ import pandas as pd
 
 import pickle
 from pathlib import Path
-import streamlit_authenticator as stauth
 
 # Set page title and icon
 st.set_page_config(page_title="Finance Dashboard", page_icon="💰")
