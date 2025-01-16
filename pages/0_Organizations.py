@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 
 # Load the Excel file
-file_path = 'resources\This Year - Consolidator Sheet.xlsx'
+file_path = 'resources/This Year - Consolidator Sheet.xlsx'
 xls = pd.ExcelFile(file_path)
 
 # Define sheet names

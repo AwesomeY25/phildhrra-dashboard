@@ -42,7 +42,7 @@ def finance_dashboard(df: pd.DataFrame) -> None:
     st.table(donor_data)
         
 # Load data from the Excel file
-excel_file_path = 'resources\This Year - Consolidator Sheet.xlsx'
+excel_file_path = 'resources/This Year - Consolidator Sheet.xlsx'
 sheet_name = 'Resource Mobilization'
 
 try:
