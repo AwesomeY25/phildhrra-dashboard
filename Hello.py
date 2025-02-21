@@ -1,41 +1,18 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022)
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 import streamlit as st
-from streamlit.logger import get_logger
-
-import pickle
 from pathlib import Path
-import streamlit_authenticator as stauth
 import pandas as pd
 
-LOGGER = get_logger(__name__)
-
 def run():
-    st.set_page_config(
-        page_title="Log In",
-        page_icon="👋",
-    )
+    st.set_page_config(page_title="Excel File Viewer", page_icon="📊")
 
     st.write("# Welcome to PhilDHRRA! 👋")
+    st.write("### Upload and View an Excel File")
 
     # File upload feature
-    st.write("**Upload an Excel File:**")
     uploaded_file = st.file_uploader("Choose an Excel file", type=['xlsx', 'xls'])
 
     if uploaded_file:
-        # Save the uploaded file to the resources directory
+        # Save the uploaded file
         resources_dir = Path("resources")
         resources_dir.mkdir(exist_ok=True)
 
@@ -45,11 +22,29 @@ def run():
 
         st.success(f"File uploaded and saved as: {file_save_path}")
 
-        # Display uploaded file content
+        # Read all sheets
         try:
-            excel_data = pd.read_excel(file_save_path)
-            st.write("**Uploaded File Content:**")
-            st.dataframe(excel_data)
+            excel_data = pd.ExcelFile(file_save_path)
+            sheet_names = excel_data.sheet_names  # Get all sheet names
+
+            st.write("### Available Sheets:")
+            for sheet in sheet_names:
+                st.write(f"- {sheet}")
+
+            # Loop through each sheet and display headers + first few rows
+            for sheet in sheet_names:
+                st.write(f"## 📄 Sheet: {sheet}")
+                df = pd.read_excel(file_save_path, sheet_name=sheet)
+
+                if not df.empty:
+                    # Display headers
+                    st.write("### Columns:", list(df.columns))
+
+                    # Display first few rows
+                    st.dataframe(df.head(10))  
+                else:
+                    st.warning(f"⚠️ The sheet '{sheet}' is empty.")
+
         except Exception as e:
             st.error(f"Error reading the file: {e}")
 
